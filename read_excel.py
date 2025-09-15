@@ -7,40 +7,54 @@ df = pd.read_excel('Online Retail.xlsx')
 
 print(df.head(), "\n")
 
-#  automaticaly handle missing value
+#  handle missing value
 
-for col in df.columns:
-
-    if df[col].dtype == "object":
-
-      df[col] = df[col].fillna("Unknown")
-
-    else:
-
-        df[col] = df[col].fillna(0)
-
+df = df.dropna()
 
  # handle duplicate rows
 
 df = df.drop_duplicates()
 
 
-#  automaticaly handle data type
+df.to_excel("retail_cleaned.xlsx", index=False)
 
-for col in df.columns:
-   
-   df[col] = pd.to_numeric(df[col], errors="coerce")
+print("Cleaned file saved as retail_cleaned.xlsx")
 
-   if "date" in col.lower():
-      
-      df[col] = pd.to_datetime(df[col], errors="coerce")
+db_user = "root"
+
+db_password = "StrongPass123!"
+
+db_host = "localhost"
+
+db_port = 3306
+
+db_name = "retail_uk"
+
+table_name = "retail"
 
 
-df.columns = df.columns.str.strip().str.lower()
+
+FILE_PATH = 'retail_cleaned.xlsx'
 
 
 
-df = df.rename(columns={
+connection_string = f"mysql+mysqlconnector://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+engine = create_engine(connection_string)
+
+try:
+
+ # read the clean file
+ 
+  df = pd.read_excel(FILE_PATH)
+
+  print("Excel file read successfully into a dataframe. ")
+
+
+
+  df.columns = df.columns.str.strip().str.lower()
+
+  df = df.rename(columns={
 
     'invoiceno': 'Invoice_No',
 
@@ -57,24 +71,35 @@ df = df.rename(columns={
     'customerid': 'Customer_ID',
 
     'country': 'Country',
-})
+  })
 
-print(df.columns)
+  print(df.columns)
 
-df.to_excel("retail_cleaned.xlsx", index=False)
 
-print("Cleaned file saved as retail_cleaned.xlsx")
 
-username = "root"
 
-password = "StrongPass123!"
+  df = df.convert_dtypes()
 
-host = "localhost"
+  print('Data type converted and columns cleaned.')
 
-database = "retail_uk"
 
-engine = create_engine(f"mysql+mysqlconnector://{username}:{password}@{host}/{database}")
 
-df.to_sql("retail", con=engine, if_exists="append", index=False)
+      
+  df.to_sql('retail', con=engine, if_exists='append', index=False)
 
-print("Data inserted into MYSQL table successfully")
+  print(f"Data from '{FILE_PATH}' inserted into MYSQL table '{table_name}'successfully")
+
+except Exception as e:
+   
+  print(f"An error occured during insertion : {e}")
+
+finally:
+
+  if 'engine' in locals():
+
+    engine.dispose()
+
+    print('database connection closed.')
+
+
+
