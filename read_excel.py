@@ -54,18 +54,34 @@ connection_string = f"mysql+mysqlconnector://{db_user}:{db_password}@{db_host}:{
 engine = create_engine(connection_string)
 
 
+ # Extract rows from mysql database
+
+df_check = pd.read_sql("SELECT * FROM retail LIMIT 10;", con=engine)
+
+print(df_check)
 
 
 
+def read_retail_data(FILE_PATH="retail_cleaned.xlsx"):
+
+  try:
+
+    
+    df = pd.read_excel(FILE_PATH)
+
+    return df
+
+  except Exception as e:
+
+    print(f"Error reading Excel file: {e}")
+
+    return None   
+
+
+
+
+ 
 try:
-
- # read the clean file
-
-  df = pd.read_excel(FILE_PATH)
-
-  print("Excel file read successfully into a dataframe. ")
-
-
 
   df.columns = df.columns.str.strip().str.lower()
 
@@ -96,6 +112,8 @@ try:
   df = df.convert_dtypes()
 
   print(df.dtypes)
+
+  # Data from retail_clean.xlsx insert  into mysql database
       
   df.to_sql('retail', con=engine, if_exists='replace', index=False)
 
@@ -103,8 +121,12 @@ try:
 
 except Exception as e:
    
-  print(f"An error occured during insertion : {e}")
+  print(f"An error occured during inserting : {e}")
 
+
+
+  # it close database connection
+  
 finally:
 
   if 'engine' in locals():
@@ -115,6 +137,10 @@ finally:
 
 
 
-df_check = pd.read_sql("SELECT * FROM retail LIMIT 10;", con=engine)
+if __name__ == "__main__": 
 
-print(df_check)
+  df = read_retail_data()
+
+  print(" Testing read_excel.py directly")
+
+
